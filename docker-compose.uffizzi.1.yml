@@ -1,0 +1,21 @@
+x-uffizzi:
+  ingress:
+    service: PaaS
+    port: 8080
+services:
+  alist:
+    memory: 4000M
+    restart: always
+    volumes:
+      - share_data:/opt/alist/data
+    ports:
+      - "3000:3000"
+    environment:
+      - UUID=81cc4dbe-9c6f-4aec-9a51-93d84f7b9f9c
+      - WEB_PASSWORD=qwq123*
+      - WEB_USERNAME=tatop
+      - TZ=Asia/Shanghai
+    container_name: PaaS
+    image: yx10010/Argo-X-Container-PaaS:latest
+volumes:
+ share_data:

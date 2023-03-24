@@ -3,7 +3,7 @@ x-uffizzi:
     service: app
     port: 80
 services:
-  alist:
+  app:
     memory: 4000M
     restart: always
     volumes:

@@ -1,6 +1,6 @@
 x-uffizzi:
   ingress:
-    service: PaaS
+    service: loadbalancer
     port: 8080
 services:
   alist:

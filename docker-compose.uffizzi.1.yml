@@ -1,7 +1,7 @@
 x-uffizzi:
   ingress:
-    service: loadbalancer
-    port: 8080
+    service: app
+    port: 80
 services:
   alist:
     memory: 4000M

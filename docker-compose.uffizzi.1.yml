@@ -4,7 +4,11 @@ x-uffizzi:
     port: 80
 services:
   app:
-    memory: 4000M
+    build: .
+    deploy:
+      resources:
+        limits:
+          memory: 4000M
     restart: always
     volumes:
       - share_data:/opt/alist/data

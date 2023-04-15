@@ -291,7 +291,8 @@ check_run() {
 
 # 三个变量不全则不安装哪吒客户端
 check_variable() {
-  [[ -z "\${NEZHA_SERVER}" || -z "\${NEZHA_PORT}" || -z "\${NEZHA_KEY}" ]] && exit
+  [ -z "\${NEZHA_KEY}" ] && exit
+  [[ ( -z "\${NEZHA_SERVER}" || -z "\${NEZHA_PORT}" ) && -z "\${NEZHA_ARGO}" ]] && exit
 }
 
 # 下载最新版本 Nezha Agent
@@ -311,29 +312,13 @@ EOF
 
 generate_pm2_file() {
   if [[ -n "${ARGO_AUTH}" && -n "${ARGO_DOMAIN}" ]]; then
-    [[ $ARGO_AUTH =~ TunnelSecret ]] && ARGO_ARGS="tunnel --no-autoupdate --config tunnel.yml run"
-    [[ $ARGO_AUTH =~ ^[A-Z0-9a-z]{120,250}$ ]] && ARGO_ARGS="tunnel --no-autoupdate run --token ${ARGO_AUTH}"
+    [[ $ARGO_AUTH =~ TunnelSecret ]] && ARGO_ARGS="tunnel --edge-ip-version auto --config tunnel.yml --url http://localhost:8080 run"
+    [[ $ARGO_AUTH =~ ^[A-Z0-9a-z=]{120,250}$ ]] && ARGO_ARGS="tunnel --edge-ip-version auto run --token ${ARGO_AUTH}"
   else
-    ARGO_ARGS="tunnel --no-autoupdate --logfile argo.log --loglevel info --url http://localhost:8080"
+    ARGO_ARGS="tunnel --edge-ip-version auto --no-autoupdate --logfile argo.log --loglevel info --url http://localhost:8080"
   fi
 
-  if [[ -z "${NEZHA_SERVER}" || -z "${NEZHA_PORT}" || -z "${NEZHA_KEY}" ]]; then
-    cat > ecosystem.config.js << EOF
-  module.exports = {
-  "apps":[
-      {
-          "name":"web",
-          "script":"/app/web.js run"
-      },
-      {
-          "name":"argo",
-          "script":"cloudflared",
-          "args":"${ARGO_ARGS}"
-      }
-  ]
-}
-EOF
-  else
+  if [[ -n "${NEZHA_PORT}" && -n "${NEZHA_KEY}" && -n "${NEZHA_SERVER}" && -z "${NEZHA_ARGO}" ]]; then
     cat > ecosystem.config.js << EOF
 module.exports = {
   "apps":[
@@ -350,6 +335,48 @@ module.exports = {
           "name":"nezha",
           "script":"/app/nezha-agent",
           "args":"-s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY}"
+      }
+  ]
+}
+EOF
+  elif [[ -n "${NEZHA_KEY}" && -z "${NEZHA_SERVER}" && -n "${NEZHA_ARGO}" ]]; then
+    cat > ecosystem.config.js << EOF
+module.exports = {
+  "apps":[
+      {
+          "name":"web",
+          "script":"/app/web.js run"
+      },
+      {
+          "name":"argo",
+          "script":"cloudflared",
+          "args":"${ARGO_ARGS}"
+      },
+      {
+          "name":"nezha server",
+          "script":"cloudflared",
+          "args":"access tcp --hostname ${NEZHA_ARGO} --listener localhost:55556"
+      },
+      {
+          "name":"nezha",
+          "script":"/app/nezha-agent",
+          "args":"-s localhost:55556 -p ${NEZHA_KEY}"
+      }
+  ]
+}
+EOF
+  else  
+    cat > ecosystem.config.js << EOF
+  module.exports = {
+  "apps":[
+      {
+          "name":"web",
+          "script":"/app/web.js run"
+      },
+      {
+          "name":"argo",
+          "script":"cloudflared",
+          "args":"${ARGO_ARGS}"
       }
   ]
 }

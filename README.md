@@ -9,10 +9,11 @@
 
 - [项目特点](README.md#项目特点)
 - [部署](README.md#部署)
-- [Argo Token的获取](README.md#argo-token-的获取)
+- [Argo Json 的获取](README.md#argo-json-的获取)
+- [Argo Token 的获取](README.md#argo-token-的获取)
 - [在 Koyeb 部署重点](README.md#在-koyeb-部署重点)
 - [在 Doprax 部署重点](README.md#在-doprax-部署重点)
-- [TTYD webssh 的部署](README.md#ttyd-webssh-的部署)
+- [ttyd webssh / filebrowser webftp 的部署](README.md#ttyd-webssh--filebrowser-webftp-的部署)
 - [鸣谢下列作者的文章和项目](README.md#鸣谢下列作者的文章和项目)
 - [免责声明](README.md#免责声明)
 
@@ -29,7 +30,7 @@
 * 前端 js 定时和 pm2 配合保活，务求让恢复时间减到最小
 * 节点信息以 V2rayN / Clash / 小火箭 链接方式输出
 * Xray 文件重新编译官方文件增加隐秘性，修改了运行时的显示信息，文件为: https://github.com/XTLS/Xray-core/blob/main/core/core.go
-* 可以使用浏览器访问，使用 ttyd，ssh over http2
+* 可以使用浏览器使用 webssh 和 webftp，更方便管理系统
 
 <img width="718" alt="image" src="https://user-images.githubusercontent.com/92626977/215277537-ff358dc1-7696-481f-b8e4-74f0cdff30f4.png">
 
@@ -53,6 +54,7 @@
   | WEB_USERNAME | 否 | admin  | 网页和 webssh 的用户名 |
   | WEB_PASSWORD | 否 | password | 网页和 webssh 的密码 |
   | SSH_DOMAIN   | 否 |        | webssh 的域名，用户名和密码就是 <WEB_USERNAME> 和 <WEB_PASSWORD> |
+  | FTP_DOMAIN   | 否 |        | webftp 的域名，用户名和密码就是 <WEB_USERNAME> 和 <WEB_PASSWORD> |  
   
 * 路径（path）
   | 命令 | 说明 |
@@ -60,7 +62,7 @@
   | <URL>/list | 查看节点数据 |
   | <URL>/status | 查看后台进程 |
   | <URL>/listen | 查看后台监听端口 |
-  |  <URL>/test  | 测试是否为只读系统 |  
+  | <URL>/test  | 测试是否为只读系统 |  
   
 * GitHub Actions 用到的变量
 
@@ -69,6 +71,15 @@
   | DOCKER_USERNAME | Dockerhub 用户名|
   | DOCKER_PASSWORD | Dockerhub 密码 |
   | DOCKER_REPO     | Dockerhub 库名 |
+
+
+## Argo Json 的获取
+
+用户可以通过 Cloudflare Json 生成网轻松获取: https://fscarmen.cloudflare.now.cc
+
+![image](https://user-images.githubusercontent.com/62703343/224388718-6adf22d0-01d3-46a0-8063-bc0a2210795f.png)
+
+如想手动，可以参考，以 Debian 为例，需要用到的命令，[Deron Cheng - CloudFlare Argo Tunnel 试用](https://zhengweidong.com/try-cloudflare-argo-tunnel)
 
 
 ## Argo Token 的获取
@@ -85,7 +96,7 @@
 
 这里只作重点的展示，更详细可以参考项目: https://github.com/fscarmen2/V2-for-Koyeb
 
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=docker&name=argox&ports=3000;http;/&env[UUID]=de04add9-5c68-8bab-950c-08cd5320df18&env[NEZHA_SERVER]=server%20domain%20or%20ip&env[NEZHA_PORT]=server%20port&env[NEZHA_KEY]=agent%20key&env[ARGO_AUTH]=argo%20token%20or%20json&env[ARGO_DOMAIN]=Argo%20domain&env[WEB_USERNAME]=Web%20username&env[WEB_PASSWORD]=Web%20password&image=docker.io/fscarmen/argo-x)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=docker&name=argox&ports=3000;http;/&env[UUID]=de04add9-5c68-8bab-950c-08cd5320df18&env[NEZHA_SERVER]=server%20domain%20or%20ip&env[NEZHA_PORT]=server%20port&env[NEZHA_KEY]=agent%20key&env[ARGO_AUTH]=argo%20token%20or%20json&env[ARGO_DOMAIN]=Argo%20domain&env[WEB_USERNAME]=Web%20username&env[WEB_PASSWORD]=Web%20password&env[SSH_DOMAIN]=ssh%20domain&env[FTP_DOMAIN]=ftp%20domain&image=docker.io/fscarmen/argo-x)
 
 <img width="680" alt="image" src="https://user-images.githubusercontent.com/92626977/218254134-20258fd8-f925-4f17-97f6-9a46cc28b364.png">
 
@@ -101,16 +112,21 @@
 
 <img width="1000" alt="image" src="https://user-images.githubusercontent.com/92626977/214807633-18b1a1fe-a3b7-4f9b-99bd-0ef56e3a259c.png">
 
-## TTYD webssh 的部署
+## ttyd webssh / filebrowser webftp 的部署
 
 * 原理
 ```
 +---------+     argo     +---------+     http     +--------+    ssh    +-----------+
 | browser | <==========> | CF edge | <==========> |  ttyd  | <=======> | ssh server|
 +---------+     argo     +---------+   websocket  +--------+    ssh    +-----------+
+
++---------+     argo     +---------+     http     +--------------+    ftp    +-----------+
+| browser | <==========> | CF edge | <==========> | filebrowser  | <=======> | ftp server|
++---------+     argo     +---------+   websocket  +--------------+    ftp    +-----------+
+
 ```
 
-* 只能使用 Json 方式建的隧道，不能使用 Token
+* 使用 Json 方式建的隧道
   
 <img width="1643" alt="image" src="https://user-images.githubusercontent.com/92626977/235453084-a8c55417-18b4-4a47-9eef-ee3053564bff.png">
 
